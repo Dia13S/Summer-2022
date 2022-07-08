@@ -1,59 +1,67 @@
-import cv2 
-import numpy as np
+import cv2
+import numpy
 
-def write_file(cent):    
-    file = open("/home/dm1ttry/Рабочий стол/practice/coords.txt", "a")
-    file.write(str(cent) + '\n')
+def nothing(*arg):
+    pass
+
+def momt():
+    moments = cv2.moments(mask_blue, 1)
+    dM01 = moments['m01']
+    dM10 = moments['m10']
+    dArea = moments['m00']
+    return dM01, dM10, dArea
+
+def find_coords():
+    x = int(dM10 / dArea)
+    y = int(dM01 / dArea)
+    cv2.circle(img, (x, y), 10, (255,0,0), -1)
+    return x, y
+
+def write_file():    
+    file = open("coords.txt", "a")
+    file.write("(" + str(x) + ";" + str(y) + ")" + '\n')
     file.close()
 
-def cont():
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV )
-    thresh = cv2.inRange(hsv, left, right)      #создание и отрисовка контура
-    contours, hierarchy = cv2.findContours( thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    return contours
+cv2.namedWindow( "out_window" )
+cap = cv2.VideoCapture(0)
+    
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
+    
+while True:
+    flag, img = cap.read()
+        
+    height, width = img.shape[:2]
+    edge = 10
+       
+    low_blue = numpy.array((90,20,20), numpy.uint8)
+    high_blue = numpy.array((150,255,255), numpy.uint8)
 
-def center():
-    rect = cv2.minAreaRect(cnt)
-    box = cv2.boxPoints(rect)
-    box = np.int0(box)
-    center = (int(rect[0][0]),int(rect[0][1]))
-    area = int(rect[1][0]*rect[1][1])
-    write_file(center)
-    return center, area, box
+    try:
+        img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        mask_blue = cv2.inRange(img_hsv,low_blue, high_blue)
+            
+        dM01, dM10, dArea = momt()
+          
+        if dArea > 150:
+            x, y = find_coords()
+            write_file()
+            
+        if (x>(width/2+edge)) and x!=0:
+            cv2.rectangle(img, (0,0), (30,height), (0,255,0), -1)
 
-def coords():
-    cv2.drawContours(img,[box],0,(255, 0, 0),2)
-    cv2.circle(img, cent, 2, (0, 0, 128), 2)
-    text = "(" + str(cent[0]) + ", " + str(cent[1]) + ")"
-    cv2.putText(img, text, (cent[0] + 10, cent[1] + 10), cv2.FONT_HERSHEY_PLAIN, 1.5, (0, 0, 128), 1, 8, 0)
+        if (x<(width/2-edge)) and x!=0:
+            cv2.rectangle(img, (width-30,0), (width,height), (0,255,0), -1)
+                
+        cv2.imshow("out_window", img)
+    except:
+        cap.release()
+        raise
+ 
+    ch = cv2.waitKey(50)
 
-if __name__ == '__main__':
-    cv2.namedWindow( "camera" ) #создание окна
-    cap = cv2.VideoCapture(0)
-
-    left = np.array((90, 55, 10), np.uint8)
-    right = np.array((132, 255, 255), np.uint8)
-
-    while True:
-        flag, img = cap.read()
-        img = cv2.flip(img,1)
-        try:
-
-            for cnt in cont():
-                  
-                cent, ar, box = center()
-
-                if ar > 1000: #вывод координат на изображение 
-                    coords()                     
-
-            cv2.imshow('camera', img)
-
-        except:
-            cap.release()
-            raise
-        butt = cv2.waitKey(5)
-        if butt == 27:          #клавиша ECS ля выхода
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()
+    if ch == 27:
+        break
+    
+cap.release()
+cv2.destroyAllWindows()
