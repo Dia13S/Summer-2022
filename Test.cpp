@@ -9,7 +9,7 @@ int main () {
 
 string line;
 
-ifstream in("/C:\Users/Diana/Desctop/colors.jpg");
+ifstream in("/C:/Users/Diana/Desctop/colors.jpg");
 
 if (in.is_open()){
     while (getline(in, line)){
