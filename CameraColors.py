@@ -6,7 +6,7 @@ class array_col:
     pass
 
 def write_file(cent):    
-    file = open("/home/dm1ttry/Рабочий стол/practice/coords.txt", "a")
+    file = open("/C/Users/Diana/Desctop/colors.txt", "a")
     file.write(str(cent) + '\n')
     file.close()
 
